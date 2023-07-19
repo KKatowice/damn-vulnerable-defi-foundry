@@ -6,6 +6,7 @@ import "forge-std/Test.sol";
 
 import {FlashLoanReceiver} from "../../../src/Contracts/naive-receiver/FlashLoanReceiver.sol";
 import {NaiveReceiverLenderPool} from "../../../src/Contracts/naive-receiver/NaiveReceiverLenderPool.sol";
+import {atckerC} from "../../../src/Contracts/naive-receiver/atck.sol";
 
 contract NaiveReceiver is Test {
     uint256 internal constant ETHER_IN_POOL = 1_000e18;
@@ -23,11 +24,11 @@ contract NaiveReceiver is Test {
         user = users[0];
         attacker = users[1];
 
-        vm.label(user, "User");
-        vm.label(attacker, "Attacker");
+        //vm.label(user, "User");
+        //vm.label(attacker, "Attacker");
 
         naiveReceiverLenderPool = new NaiveReceiverLenderPool();
-        vm.label(address(naiveReceiverLenderPool), "Naive Receiver Lender Pool");
+        ///vm.label(address(naiveReceiverLenderPool), "Naive Receiver Lender Pool");
         vm.deal(address(naiveReceiverLenderPool), ETHER_IN_POOL);
 
         assertEq(address(naiveReceiverLenderPool).balance, ETHER_IN_POOL);
@@ -36,7 +37,7 @@ contract NaiveReceiver is Test {
         flashLoanReceiver = new FlashLoanReceiver(
             payable(naiveReceiverLenderPool)
         );
-        vm.label(address(flashLoanReceiver), "Flash Loan Receiver");
+        ///vm.label(address(flashLoanReceiver), "Flash Loan Receiver");
         vm.deal(address(flashLoanReceiver), ETHER_IN_RECEIVER);
 
         assertEq(address(flashLoanReceiver).balance, ETHER_IN_RECEIVER);
@@ -48,6 +49,9 @@ contract NaiveReceiver is Test {
         /**
          * EXPLOIT START *
          */
+        vm.startPrank(attacker);
+        atckerC scam = new atckerC();
+        scam.callaAfunz(address(naiveReceiverLenderPool), 0, address(flashLoanReceiver));
 
         /**
          * EXPLOIT END *
